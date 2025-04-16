@@ -405,10 +405,10 @@ if __name__ == "__main__":
     pose_image = Image.open(args.input_img).convert("RGB")
     h, w = pose_image.size
 
-    pose_image = np.array(pose_image)
-
     # Enhance prompt
     light_prompt = prompt_enhance(pose_image, args.light_prompt)
+
+    pose_image = np.array(pose_image)
 
     input_fg, results = process_relight(
         pose_image,
