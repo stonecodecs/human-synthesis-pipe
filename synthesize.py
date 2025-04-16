@@ -54,11 +54,16 @@ def main():
 
     # Generate pose
     # Create black control image
-    control_image = Image.new("RGB", (w, h), (0, 0, 0))
+    control_image = None
     pose_image = pose_synthesize(
         input_image,
         control_image,
         pose_prompt,
+        'black-forest-labs/FLUX.1-dev',
+        'ByteDance/InfiniteYou',
+        'v1.0',
+        args.pose_model_version,
+        0,
         args.pose_seed,
         w,
         h,
@@ -69,7 +74,6 @@ def main():
         args.pose_infusenet_guidance_end,
         args.pose_enable_realism,
         args.pose_enable_anti_blur,
-        args.pose_model_version,
         args.quantize_8bit,
         args.cpu_offload
     )

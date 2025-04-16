@@ -12,139 +12,76 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import gc
+import os
 
-import pillow_avif
 import torch
-from huggingface_hub import snapshot_download
-from pillow_heif import register_heif_opener
+from PIL import Image
 
-from .pipelines.pipeline_infu_flux import InfUFluxPipeline
-
-
-# Register HEIF support for Pillow
-register_heif_opener()
-
-class ModelVersion:
-    STAGE_1 = "sim_stage1"
-    STAGE_2 = "aes_stage2"
-
-    DEFAULT_VERSION = STAGE_2
-    
-ENABLE_ANTI_BLUR_DEFAULT = False
-ENABLE_REALISM_DEFAULT = False
-
-loaded_pipeline_config = {
-    "model_version": "aes_stage2",
-    "enable_realism": False,
-    "enable_anti_blur": False,
-    'pipeline': None
-}
-
-
-def download_models():
-    snapshot_download(repo_id='ByteDance/InfiniteYou', local_dir='./models/InfiniteYou', local_dir_use_symlinks=False)
-    try:
-        snapshot_download(repo_id='black-forest-labs/FLUX.1-dev', local_dir='./models/FLUX.1-dev', local_dir_use_symlinks=False)
-    except Exception as e:
-        print(e)
-        print('\nYou are downloading `black-forest-labs/FLUX.1-dev` to `./models/FLUX.1-dev` but failed. '
-              'Please accept the agreement and obtain access at https://huggingface.co/black-forest-labs/FLUX.1-dev. '
-              'Then, use `huggingface-cli login` and your access tokens at https://huggingface.co/settings/tokens to authenticate. '
-              'After that, run the code again.')
-        print('\nYou can also download it manually from HuggingFace and put it in `./models/InfiniteYou`, '
-              'or you can modify `base_model_path` in `app.py` to specify the correct path.')
-        exit()
-
-
-def prepare_pipeline(model_version, enable_realism, enable_anti_blur, quantize_8bit, cpu_offload):
-    if (
-        loaded_pipeline_config['pipeline'] is not None
-        and loaded_pipeline_config["enable_realism"] == enable_realism 
-        and loaded_pipeline_config["enable_anti_blur"] == enable_anti_blur
-        and model_version == loaded_pipeline_config["model_version"]
-    ):
-        return loaded_pipeline_config['pipeline']
-    
-    loaded_pipeline_config["enable_realism"] = enable_realism
-    loaded_pipeline_config["enable_anti_blur"] = enable_anti_blur
-    loaded_pipeline_config["model_version"] = model_version
-
-    pipeline = loaded_pipeline_config['pipeline']
-    if pipeline is None or pipeline.model_version != model_version:
-        print(f'Switching model to {model_version}')
-        del pipeline
-        del loaded_pipeline_config['pipeline']
-        gc.collect()
-        torch.cuda.empty_cache()
-
-        model_path = f'./models/InfiniteYou/infu_flux_v1.0/{model_version}'
-        print(f'Loading model from {model_path}')
-
-        pipeline = InfUFluxPipeline(
-            base_model_path='./models/FLUX.1-dev',
-            infu_model_path=model_path,
-            insightface_root_path='./models/InfiniteYou/supports/insightface',
-            image_proj_num_tokens=8,
-            infu_flux_version='v1.0',
-            model_version=model_version,
-            quantize_8bit=quantize_8bit,
-            cpu_offload=cpu_offload
-        )
-
-        loaded_pipeline_config['pipeline'] = pipeline
-
-    pipeline.pipe.delete_adapters(['realism', 'anti_blur'])
-    loras = []
-    if enable_realism:
-        loras.append(['./models/InfiniteYou/supports/optional_loras/flux_realism_lora.safetensors', 'realism', 1.0])
-    if enable_anti_blur:
-        loras.append(['./models/InfiniteYou/supports/optional_loras/flux_anti_blur_lora.safetensors', 'anti_blur', 1.0])
-    pipeline.load_loras(loras)
-
-    return pipeline
+from pipelines.pipeline_infu_flux import InfUFluxPipeline
 
 
 def pose_synthesize(
-    input_image, 
-    control_image, 
-    prompt, 
-    seed, 
-    width,
-    height,
-    guidance_scale, 
-    num_steps, 
-    infusenet_conditioning_scale, 
-    infusenet_guidance_start,
-    infusenet_guidance_end,
-    enable_realism,
-    enable_anti_blur,
-    model_version,
-    quantize_8bit=True,
-    cpu_offload=True
+        in_image: Image.Image,
+        control_image: None | Image.Image=None,
+        prompt: str="",
+        base_model_path: str='black-forest-labs/FLUX.1-dev',
+        model_dir: str='ByteDance/InfiniteYou',
+        infu_flux_version: str='v1.0',
+        model_version: str='sim_stage1',
+        cuda_device: int=0,
+        seed: int=0,
+        width: int=512,
+        height: int=512,
+        guidance_scale: float=3.5,
+        num_steps: int=30,
+        infusenet_conditioning_scale: float=1.0,
+        infusenet_guidance_start: float=0.0,
+        infusenet_guidance_end: float=1.0,
+        enable_realism_lora: bool=False,
+        enable_anti_blur_lora: bool=False,
+        quantize_8bit: bool=False,
+        cpu_offload: bool=False,
 ):
-    pipeline = prepare_pipeline(model_version=model_version, enable_realism=enable_realism, enable_anti_blur=enable_anti_blur, quantize_8bit=quantize_8bit, cpu_offload=cpu_offload)
+    # Set cuda device
+    torch.cuda.set_device(cuda_device)
 
+    # Load pipeline
+    infu_model_path = os.path.join(model_dir, f'infu_flux_{infu_flux_version}', model_version)
+    insightface_root_path = os.path.join(model_dir, 'supports', 'insightface')
+    pipe = InfUFluxPipeline(
+        base_model_path=base_model_path,
+        infu_model_path=infu_model_path,
+        insightface_root_path=insightface_root_path,
+        infu_flux_version=infu_flux_version,
+        model_version=model_version,
+        quantize_8bit=quantize_8bit,
+        cpu_offload=cpu_offload,
+    )
+    # Load LoRAs (optional)
+    lora_dir = os.path.join(model_dir, 'supports', 'optional_loras')
+    if not os.path.exists(lora_dir): lora_dir = './models/InfiniteYou/supports/optional_loras'
+    loras = []
+    if enable_realism_lora:
+        loras.append([os.path.join(lora_dir, 'flux_realism_lora.safetensors'), 'realism', 1.0])
+    if enable_anti_blur_lora:
+        loras.append([os.path.join(lora_dir, 'flux_anti_blur_lora.safetensors'), 'anti_blur', 1.0])
+    pipe.load_loras(loras)
+    
+    # Perform inference
     if seed == 0:
         seed = torch.seed() & 0xFFFFFFFF
-
-    try:
-        image = pipeline(
-            id_image=input_image,
-            prompt=prompt,
-            control_image=control_image,
-            seed=seed,
-            width=width,
-            height=height,
-            guidance_scale=guidance_scale,
-            num_steps=num_steps,
-            infusenet_conditioning_scale=infusenet_conditioning_scale,
-            infusenet_guidance_start=infusenet_guidance_start,
-            infusenet_guidance_end=infusenet_guidance_end,
-            cpu_offload=cpu_offload
-        )
-    except Exception as e:
-        print(e)
-        return None
-
+    image = pipe(
+        id_image=in_image,
+        prompt=prompt,
+        control_image=control_image if control_image is not None else None,
+        seed=seed,
+        width=width,
+        height=height,
+        guidance_scale=guidance_scale,
+        num_steps=num_steps,
+        infusenet_conditioning_scale=infusenet_conditioning_scale,
+        infusenet_guidance_start=infusenet_guidance_start,
+        infusenet_guidance_end=infusenet_guidance_end,
+        cpu_offload=cpu_offload,
+    )
     return image
