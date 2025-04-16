@@ -15,6 +15,7 @@ from enum import Enum
 from torch.hub import download_url_to_file
 from tqdm import tqdm
 from time import time
+from prompt_enhance import prompt_enhance
 
 # 'stablediffusionapi/realistic-vision-v51'
 # 'runwayml/stable-diffusion-v1-5'
@@ -375,3 +376,55 @@ class BGSource(Enum):
     RIGHT = "Right Light"
     TOP = "Top Light"
     BOTTOM = "Bottom Light"
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="ICLight")
+
+    # Lighting args
+    parser.add_argument("--input_img", type=str, required=True, help="Path to the input image")
+    parser.add_argument("--out_path", type=str, required=False, default="synthesized_images", help="Path to the output directory")
+    parser.add_argument("--light_prompt", type=str, required=True, help="Prompt for the image generation")
+    parser.add_argument("--light_num_samples", type=int, default=1, help="Number of samples to generate")
+    parser.add_argument("--light_seed", type=int, default=12345, help="Random seed for generation")
+    parser.add_argument("--light_steps", type=int, default=25, help="Number of steps for generation")
+    parser.add_argument("--light_a_prompt", type=str, default="best quality", help="Added prompt")
+    parser.add_argument("--light_n_prompt", type=str, default="lowres, bad anatomy, bad hands, cropped, worst quality", help="Negative prompt")
+    parser.add_argument("--light_cfg", type=float, default=2.0, help="CFG scale")
+    parser.add_argument("--light_highres_scale", type=float, default=1.5, help="Highres scale")
+    parser.add_argument("--light_highres_denoise", type=float, default=0.5, help="Highres denoise")
+    parser.add_argument("--light_lowres_denoise", type=float, default=0.9, help="Lowres denoise")
+    parser.add_argument("--light_bg_source", type=str, default=BGSource.NONE.value, help="Background source")
+    args = parser.parse_args()
+
+    # Create output directory
+    if not os.path.exists(args.out_path):
+        os.makedirs(args.out_path)
+
+    # Read and extract input image information
+    pose_image = Image.open(args.input_img).convert("RGB")
+    h, w = pose_image.size
+
+    # Enhance prompt
+    light_prompt = prompt_enhance(pose_image, args.light_prompt)
+
+    input_fg, results = process_relight(
+        pose_image,
+        light_prompt,
+        w,
+        h,
+        args.light_num_samples,
+        args.light_seed,
+        args.light_steps,
+        args.light_a_prompt,
+        args.light_n_prompt,
+        args.light_cfg,
+        args.light_highres_scale,
+        args.light_highres_denoise,
+        args.light_lowres_denoise,
+        BGSource(args.light_bg_source)
+    )
+
+    # Assume that we just generate one image for simplicity
+    # Save the output image
+    Image.fromarray(results[0]).save(os.path.join(args.out_path, "output.png"))
