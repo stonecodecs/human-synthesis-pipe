@@ -6,7 +6,7 @@ from time import time
 from PIL import Image
 
 from ic_light import BGSource, resize_without_crop, resize_and_center_crop, process_relight
-from prompt_enhance import prompt_enhance
+from prompt_enhance import prompt_enhance_pose
 from pose_utils.infinityU.infinityU import pose_synthesize
 
 def main():

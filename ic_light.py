@@ -15,7 +15,7 @@ from enum import Enum
 from torch.hub import download_url_to_file
 from tqdm import tqdm
 from time import time
-from prompt_enhance import prompt_enhance
+from prompt_enhance import prompt_enhance_light
 
 # 'stablediffusionapi/realistic-vision-v51'
 # 'runwayml/stable-diffusion-v1-5'
