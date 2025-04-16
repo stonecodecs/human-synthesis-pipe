@@ -39,7 +39,7 @@ def main():
     w = (w - w%8)
 
     # Enhance pose prompt
-    pose_prompt = prompt_enhance(input_image, args.pose_prompt)
+    pose_prompt = prompt_enhance_pose(input_image, args.pose_prompt)
 
     # Generate pose
     # Create black control image
@@ -62,7 +62,7 @@ def main():
         args.pose_infusenet_guidance_start,
         args.pose_infusenet_guidance_end,
         args.pose_enable_realism,
-        args.pose_enable_anti_blur,
+        False,
         True,
         True
     )

@@ -406,7 +406,7 @@ if __name__ == "__main__":
     h, w = pose_image.size
 
     # Enhance prompt
-    light_prompt = prompt_enhance(pose_image, args.light_prompt)
+    light_prompt = prompt_enhance_light(pose_image, args.light_prompt)
 
     pose_image = np.array(pose_image)
 
