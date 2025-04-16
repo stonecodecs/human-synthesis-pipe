@@ -17,7 +17,7 @@ import os
 import torch
 from PIL import Image
 
-from pipelines.pipeline_infu_flux import InfUFluxPipeline
+from .pipelines.pipeline_infu_flux import InfUFluxPipeline
 
 
 def pose_synthesize(

@@ -74,8 +74,8 @@ def main():
         args.pose_infusenet_guidance_end,
         args.pose_enable_realism,
         args.pose_enable_anti_blur,
-        args.quantize_8bit,
-        args.cpu_offload
+        True,
+        True
     )
     
     # Enhance prompt

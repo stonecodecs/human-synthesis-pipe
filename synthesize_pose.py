@@ -35,17 +35,24 @@ def main():
     # Read and extract input image information
     input_image = Image.open(args.input_img).convert("RGB")
     h, w = input_image.size
+    h = (h - h %8)
+    w = (w - w%8)
 
     # Enhance pose prompt
     pose_prompt = prompt_enhance(input_image, args.pose_prompt)
 
     # Generate pose
     # Create black control image
-    control_image = Image.new("RGB", (w, h), (0, 0, 0))
+    control_image = None
     pose_image = pose_synthesize(
         input_image,
         control_image,
         pose_prompt,
+        'black-forest-labs/FLUX.1-dev',
+        'ByteDance/InfiniteYou',
+        'v1.0',
+        args.pose_model_version,
+        0,
         args.pose_seed,
         w,
         h,
@@ -56,12 +63,11 @@ def main():
         args.pose_infusenet_guidance_end,
         args.pose_enable_realism,
         args.pose_enable_anti_blur,
-        args.pose_model_version,
-        args.quantize_8bit,
-        args.cpu_offload
+        True,
+        True
     )
     
-    Image.fromarray(control_image).save(os.path.join(args.out_path, "pose.png"))
+    Image.fromarray(pose_image).save(os.path.join(args.out_path, "pose.png"))
 
 if __name__ == "__main__":
     main()
