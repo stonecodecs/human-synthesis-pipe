@@ -11,7 +11,7 @@ apt-get update && apt-get install google-cloud-cli -y
 apt-get install ffmpeg libsm6 libxext6  -y
 
 git clone https://github.com/ginlov/human-synthesis-pipe.git /home/human-synthesis-pipe
-pip install -r requirements.txt
+pip install -r /home/human-synthesis-pipe/requirements.txt
 huggingface-cli login --token $HUGGINGFACE_TOKEN
 
 huggingface-cli download black-forest-labs/FLUX.1-dev --local-dir /home/human-synthesis-pipe/models/FLUX.1-dev
