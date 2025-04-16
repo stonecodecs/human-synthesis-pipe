@@ -23,6 +23,8 @@ def main():
     parser.add_argument("--pose_enable_realism", type=bool, default=True, help="Enable realism for pose generation")
     parser.add_argument("--pose_enable_anti_blur", type=bool, default=True, help="Enable anti-blur for pose generation")
     parser.add_argument("--pose_model_version", type=str, default="v1.0", help="Pose model version")
+    parser.add_argument("--quantize_8bit", type=bool, default=True, help="Use 8-bit quantization")
+    parser.add_argument("--cpu_offload", type=bool, default=True, help="Enable CPU offloading")
 
     # Lighting args
     parser.add_argument("--out_path", type=str, required=False, default="synthesized_images", help="Path to the output directory")
@@ -67,7 +69,9 @@ def main():
         args.pose_infusenet_guidance_end,
         args.pose_enable_realism,
         args.pose_enable_anti_blur,
-        args.pose_model_version
+        args.pose_model_version,
+        args.quantize_8bit,
+        args.cpu_offload
     )
     
     # Enhance prompt

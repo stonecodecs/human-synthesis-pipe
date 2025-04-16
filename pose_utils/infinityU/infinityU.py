@@ -57,7 +57,7 @@ def download_models():
         exit()
 
 
-def prepare_pipeline(model_version, enable_realism, enable_anti_blur):
+def prepare_pipeline(model_version, enable_realism, enable_anti_blur, quantize_8bit, cpu_offload):
     if (
         loaded_pipeline_config['pipeline'] is not None
         and loaded_pipeline_config["enable_realism"] == enable_realism 
@@ -88,6 +88,8 @@ def prepare_pipeline(model_version, enable_realism, enable_anti_blur):
             image_proj_num_tokens=8,
             infu_flux_version='v1.0',
             model_version=model_version,
+            quantize_8bit=quantize_8bit,
+            cpu_offload=cpu_offload
         )
 
         loaded_pipeline_config['pipeline'] = pipeline
@@ -117,9 +119,11 @@ def pose_synthesize(
     infusenet_guidance_end,
     enable_realism,
     enable_anti_blur,
-    model_version
+    model_version,
+    quantize_8bit=True,
+    cpu_offload=True
 ):
-    pipeline = prepare_pipeline(model_version=model_version, enable_realism=enable_realism, enable_anti_blur=enable_anti_blur)
+    pipeline = prepare_pipeline(model_version=model_version, enable_realism=enable_realism, enable_anti_blur=enable_anti_blur, quantize_8bit=quantize_8bit, cpu_offload=cpu_offload)
 
     if seed == 0:
         seed = torch.seed() & 0xFFFFFFFF
@@ -137,10 +141,10 @@ def pose_synthesize(
             infusenet_conditioning_scale=infusenet_conditioning_scale,
             infusenet_guidance_start=infusenet_guidance_start,
             infusenet_guidance_end=infusenet_guidance_end,
+            cpu_offload=cpu_offload
         )
     except Exception as e:
         print(e)
-        gr.Error(f"An error occurred: {e}")
-        return gr.update()
+        return None
 
-    return gr.update(value = image, label=f"Generated Image, seed = {seed}")
+    return image
