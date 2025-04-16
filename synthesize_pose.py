@@ -67,7 +67,7 @@ def main():
         True
     )
     
-    Image.fromarray(pose_image).save(os.path.join(args.out_path, "pose.png"))
+    pose_image.save(os.path.join(args.out_path, "pose.png"))
 
 if __name__ == "__main__":
     main()

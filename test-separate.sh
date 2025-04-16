@@ -27,7 +27,7 @@ export LIGHT_HIGHRES_SCALE=2.0
 export LIGHT_HIGHRES_DENOISE=0.75
 export LIGHT_BG_SOURCE="None"
 
-python synthesize-pose.py --input_img $INPUT_IMAGE --pose_prompt "$POSE_PROMPT" --pose_seed $POSE_SEED \
+python synthesize_pose.py --input_img $INPUT_IMAGE --pose_prompt "$POSE_PROMPT" --pose_seed $POSE_SEED \
 --pose_guidance_scale $POSE_GUIDANCE_SCALE --pose_steps $POSE_STEPS --pose_infusenet_cond_scale $POSE_INFUSENET_COND_SCALE \
 --pose_infusenet_guidance_start $POSE_INFUSENET_GUIDANCE_START --pose_infusenet_guidance_end $POSE_INFUSENET_GUIDANCE_END \
 --pose_enable_realism $POSE_ENABLE_REALISM --pose_enable_anti_blur $POSE_ENABLE_ANTI_BLUR --pose_model_version $POSE_MODEL_VERSION \
@@ -35,7 +35,7 @@ python synthesize-pose.py --input_img $INPUT_IMAGE --pose_prompt "$POSE_PROMPT" 
 --out_path $OUTPUT_PATH
 
 
-python ic-light.py --input_img $LIGHT_IMG_PATH --out_path $OUTPUT_PATH --light_prompt "$LIGHT_PROMPT" --light_num_samples $LIGHT_NUM_SAMPLES --light_seed $LIGHT_SEED \
+python ic_light.py --input_img $LIGHT_IMG_PATH --out_path $OUTPUT_PATH --light_prompt "$LIGHT_PROMPT" --light_num_samples $LIGHT_NUM_SAMPLES --light_seed $LIGHT_SEED \
 --light_steps $LIGHT_STEPS --light_a_prompt "$LIGHT_A_PROMPT" --light_n_prompt "$LIGHT_N_PROMPT" \
 --light_cfg $LIGHT_CFG --light_highres_scale $LIGHT_HIGHRES_SCALE --light_highres_denoise $LIGHT_HIGHRES_DENOISE \
 --light_bg_source $LIGHT_BG_SOURCE
