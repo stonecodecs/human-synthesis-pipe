@@ -429,7 +429,7 @@ if __name__ == "__main__":
             image_path = os.path.join(args.input_dir, 'images_lr', camera_id, f"{timestep}_img.jpg")
             pose_image = Image.open(image_path)
             pose_image = np.array(pose_image)
-            mask_path = os.path.join(args.input_dir, 'fmask_lr', camera_id, f"{timestep}_mask.png")
+            mask_path = os.path.join(args.input_dir, 'fmask_lr', camera_id, f"{timestep}_img_fmask.png")
             mask_image = np.array(Image.open(mask_path))
             img_masked = apply_mask(pose_image, mask_image)
             img_masked_pil = Image.fromarray(img_masked)
