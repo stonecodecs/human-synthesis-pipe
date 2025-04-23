@@ -414,7 +414,7 @@ if __name__ == "__main__":
             os.makedirs(os.path.join(args.out_path, 'images_lr', camera_id))
 
     all_time_steps = os.listdir(os.path.join(args.input_dir, 'images_lr', first_camera_id))
-    all_time_steps = [x.splt('_')[0] for x in all_time_steps]
+    all_time_steps = [x.split('_')[0] for x in all_time_steps]
 
     for timestep in tqdm(all_time_steps, desc="Processing Time Steps"):
         # Get crop params
