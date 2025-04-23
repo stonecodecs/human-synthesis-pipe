@@ -17,6 +17,7 @@ from tqdm import tqdm
 from time import time
 from prompt_enhance import prompt_enhance_light
 from crop import create_transforms_json, process_images_and_intrinsics, apply_mask
+from tqdm import tqdm
 
 # 'stablediffusionapi/realistic-vision-v51'
 # 'runwayml/stable-diffusion-v1-5'
@@ -413,7 +414,7 @@ if __name__ == "__main__":
     all_time_steps = os.listdir(os.path.join(args.input_dir, 'image_lr', first_camera_id))
     all_time_steps = [x.splt('_')[0] for x in all_time_steps]
 
-    for timestep in all_time_steps:
+    for timestep in tqdm(all_time_steps, desc="Processing Time Steps"):
         # Get crop params
         crop_params = process_images_and_intrinsics(
             args.input_dir,
@@ -421,7 +422,7 @@ if __name__ == "__main__":
         )
         
         # Relight
-        for camera_id in camera_ids:
+        for camera_id in tqdm(camera_ids, desc=f"Processing Cameras for Timestep {timestep}", leave=False):
             # Get image
             image_path = os.path.join(args.input_dir, 'images_lr', camera_id, f"{timestep}_image.png")
             pose_image = Image.open(image_path)
