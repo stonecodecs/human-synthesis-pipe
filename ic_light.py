@@ -442,6 +442,9 @@ if __name__ == "__main__":
         
             h, w, _ = np_cropped.shape
 
+            h = h - (h % 8)
+            w = w - (w % 8)
+
             input_fg, results = process_relight(
                 np_cropped,
                 light_prompt,
