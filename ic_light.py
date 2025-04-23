@@ -426,7 +426,7 @@ if __name__ == "__main__":
         # Relight
         for camera_id in tqdm(camera_ids, desc=f"Processing Cameras for Timestep {timestep}", leave=False):
             # Get image
-            image_path = os.path.join(args.input_dir, 'images_lr', camera_id, f"{timestep}_image.jpg")
+            image_path = os.path.join(args.input_dir, 'images_lr', camera_id, f"{timestep}_img.jpg")
             pose_image = Image.open(image_path)
             pose_image = np.array(pose_image)
             mask_path = os.path.join(args.input_dir, 'fmask_lr', camera_id, f"{timestep}_mask.png")
