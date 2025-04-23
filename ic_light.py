@@ -435,15 +435,15 @@ if __name__ == "__main__":
             img_masked_pil = Image.fromarray(img_masked)
             crop = crop_params[camera_id]['crop']
             cropped = img_masked_pil.crop(crop)
-            cropped = np.array(cropped)
+            np_cropped = np.array(cropped)
         
             # Enhance prompt
             light_prompt = prompt_enhance_light(cropped, args.light_prompt)
         
-            h, w, _ = cropped.shape
+            h, w, _ = np_cropped.shape
 
             input_fg, results = process_relight(
-                cropped,
+                np_cropped,
                 light_prompt,
                 w,
                 h,
