@@ -409,7 +409,9 @@ if __name__ == "__main__":
     camera_ids = os.listdir(os.path.join(args.input_dir, 'images_lr'))
     first_camera_id = camera_ids[0]
     for camera_id in camera_ids:
-        os.makedirs(os.path.join(args.out_path, 'images_lr', camera_id))
+        if not os.path.exists(os.path.join(args.out_path, 'images_lr', camera_id)):
+            # Create the directory for each camera
+            os.makedirs(os.path.join(args.out_path, 'images_lr', camera_id))
 
     all_time_steps = os.listdir(os.path.join(args.input_dir, 'images_lr', first_camera_id))
     all_time_steps = [x.splt('_')[0] for x in all_time_steps]
