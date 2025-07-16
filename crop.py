@@ -163,7 +163,6 @@ def process_images_and_intrinsics(base_dir, image_id="0005", scale=0.5):
             crop_y1 -= (crop_y2 - original_height)
             crop_y2 = original_height
         
-
         # Update intrinsics for this camera
         K_new = update_intrinsics(K, crop_x1, crop_y1, original_width, original_height)
         

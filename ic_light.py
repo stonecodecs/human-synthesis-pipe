@@ -410,7 +410,7 @@ if __name__ == "__main__":
     first_camera_id = camera_ids[0]
     for camera_id in camera_ids:
         if not os.path.exists(os.path.join(args.out_path, 'images_lr', camera_id)):
-            # Create the directory for each camera
+            # Create the directory for each camera in output directory
             os.makedirs(os.path.join(args.out_path, 'images_lr', camera_id))
 
     all_time_steps = os.listdir(os.path.join(args.input_dir, 'images_lr', first_camera_id))
@@ -464,4 +464,5 @@ if __name__ == "__main__":
 
             # Assume that we just generate one image for simplicity
             # Save the output image
+            os.makedirs(os.path.join(args.out_path, 'images_lr', camera_id), exist_ok=True)
             Image.fromarray(results[0]).save(os.path.join(args.out_path, 'images_lr', camera_id, f"{timestep}_image.png"))

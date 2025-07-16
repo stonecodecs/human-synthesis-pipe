@@ -23,6 +23,7 @@ def main():
     parser.add_argument("--pose_enable_realism", type=bool, default=True, help="Enable realism for pose generation")
     parser.add_argument("--pose_enable_anti_blur", type=bool, default=True, help="Enable anti-blur for pose generation")
     parser.add_argument("--pose_model_version", type=str, default="v1.0", help="Pose model version")
+    parser.add_argument("--flux_model_path", type=str, default="/workspace/leovol/models/FLUX.1-dev", help="Path to FLUX model directory")
     parser.add_argument("--quantize_8bit", type=bool, default=True, help="Use 8-bit quantization")
     parser.add_argument("--cpu_offload", type=bool, default=True, help="Enable CPU offloading")
 
@@ -59,7 +60,7 @@ def main():
         input_image,
         control_image,
         pose_prompt,
-        'black-forest-labs/FLUX.1-dev',
+        args.flux_model_path,  # Use command line parameter
         'ByteDance/InfiniteYou',
         'v1.0',
         args.pose_model_version,

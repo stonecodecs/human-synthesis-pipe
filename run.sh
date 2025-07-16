@@ -1,14 +1,14 @@
 #/bin/bash
-export INPUT_PATH="/data/org/100831"
-export OUTPUT_PATH="/data/cropped/100831"
-export LIGHT_PROMPT="A beautiful sunset over the ocean"
+export INPUT_PATH="/workspace/datasetvol/mvhuman_data/mv_captures/100001"
+export OUTPUT_PATH="/workspace/ic-light-outputs/100001"
+export LIGHT_PROMPT="A spotlight from above shines downward."
 export LIGHT_NUM_SAMPLES=1
 export LIGHT_SEED=67890
 export LIGHT_STEPS=25
 export LIGHT_A_PROMPT="best quality"
 export LIGHT_N_PROMPT="lowres, bad anatomy, bad hands, cropped, worst quality"
 export LIGHT_CFG=2.0
-export LIGHT_HIGHRES_SCALE=2.0
+export LIGHT_HIGHRES_SCALE=0.5
 export LIGHT_HIGHRES_DENOISE=0.75
 export LIGHT_BG_SOURCE="None"
 export LIGHT_LOWRES_DENOISE=0.9

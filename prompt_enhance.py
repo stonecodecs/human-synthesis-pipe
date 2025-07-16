@@ -1,6 +1,7 @@
 import PIL
 
 from google import genai
+import os
 
 def prompt_enhance_pose(
         image: PIL.Image,
@@ -8,8 +9,8 @@ def prompt_enhance_pose(
 ):
      # input_caption_prompt = "Please provide a prompt for the image for Diffusion Model text-to-image generative model training, i.e. for FLUX or StableDiffusion 3. The prompt should be a detailed description of the image, including the character/asset/item, the environment, the pose, the lighting, the camera view, etc. The prompt should be detailed enough to generate the image. The prompt should be as short and precise as possible, in one-line format, and does not exceed 77 tokens."
     input_caption_prompt = (
-        "Please provide a prompt for a Diffusion Model text-to-image generative model for the image I will give you. "
-        "The prompt should be a detailed description of the image, especially the main subject (i.e. the main character/asset/item), the environment, the pose, the lighting, the camera view, the style etc."
+        "Provide a prompt for a Diffusion Model text-to-image generative model for the image I will give you. "
+        "The prompt should be a description of the image regarding the main subject (i.e. the main character/asset/item), the environment, the pose, the lighting, the camera view, the clothing, etc."
         "The prompt should be detailed enough to generate the target image. "
         "The prompt should provide information about the camera view."
         # "Identify key elements and that remain consistent from the source image, and highlight differences in the target image. "
@@ -21,7 +22,7 @@ def prompt_enhance_pose(
 
     # Choose a Gemini model.
     caption_model = genai.Client(
-        api_key="AIzaSyAy9_fdp2beH_ylVDtejfnhgHTEDg0ya6s"
+        api_key=os.getenv('GEMINI_API_KEY')
     )
     input_image_prompt = caption_model.models.generate_content(
         model='gemini-1.5-flash', contents=[input_caption_prompt, image]).text
@@ -60,7 +61,7 @@ def prompt_enhance_light(
 
     # Choose a Gemini model.
     caption_model = genai.Client(
-        api_key="AIzaSyAy9_fdp2beH_ylVDtejfnhgHTEDg0ya6s"
+        api_key=os.getenv('GEMINI_API_KEY')
     )
     input_image_prompt = caption_model.models.generate_content(
         model='gemini-1.5-flash', contents=[input_caption_prompt, image]).text

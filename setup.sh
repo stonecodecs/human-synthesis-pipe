@@ -10,8 +10,8 @@ echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.clou
 apt-get update && apt-get install google-cloud-cli -y
 apt-get install ffmpeg libsm6 libxext6  -y
 
-git clone https://github.com/ginlov/human-synthesis-pipe.git /home/human-synthesis-pipe
-pip install -r /home/human-synthesis-pipe/requirements.txt
 huggingface-cli login --token $HUGGINGFACE_TOKEN
+pip install -r /home/human-synthesis-pipe/requirements.txt
 
+mkdir -p /home/human-synthesis-pipe/models
 huggingface-cli download black-forest-labs/FLUX.1-dev --local-dir /home/human-synthesis-pipe/models/FLUX.1-dev
