@@ -6,7 +6,7 @@ from time import time
 from PIL import Image
 
 from ic_light import BGSource, resize_without_crop, resize_and_center_crop, process_relight
-from prompt_enhance import prompt_enhance_pose
+from prompting.prompt_enhance import prompt_enhance_pose
 from pose_utils.infinityU.infinityU import pose_synthesize
 
 def main():
@@ -17,6 +17,8 @@ def main():
     parser.add_argument("--pose_seed", type=int, default=12345, help="Random seed for pose generation")
     parser.add_argument("--pose_guidance_scale", type=float, default=2.0, help="Pose guidance scale")
     parser.add_argument("--pose_steps", type=int, default=25, help="Number of steps for pose generation")
+    parser.add_argument("--flux_model_path", type=str, default="/workspace/stonevol/ext_models/FLUX.1-dev", help="Path to FLUX model directory")
+    parser.add_argument("--infinite_model_path", type=str, default="ByteDance/InfiniteYou", help="Path to InfiniteYou model directory")
     parser.add_argument("--pose_infusenet_cond_scale", type=float, default=1.0, help="Pose InfuseNet condition scale")
     parser.add_argument("--pose_infusenet_guidance_start", type=float, default=0.5, help="Pose InfuseNet guidance start")
     parser.add_argument("--pose_infusenet_guidance_end", type=float, default=0.9, help="Pose InfuseNet guidance end")
@@ -39,7 +41,8 @@ def main():
     w = (w - w%8)
 
     # Enhance pose prompt
-    pose_prompt = prompt_enhance_pose(input_image, args.pose_prompt)
+    # pose_prompt = prompt_enhance_pose(input_image, args.pose_prompt)
+    pose_prompt = args.pose_prompt
 
     # Generate pose
     # Create black control image
@@ -48,8 +51,8 @@ def main():
         input_image,
         control_image,
         pose_prompt,
-        'black-forest-labs/FLUX.1-dev',
-        'ByteDance/InfiniteYou',
+        args.flux_model_path,
+        args.infinite_model_path,
         'v1.0',
         args.pose_model_version,
         0,

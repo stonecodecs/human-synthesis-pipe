@@ -36,7 +36,7 @@ python synthesize_pose.py --input_img $INPUT_IMAGE --pose_prompt "$POSE_PROMPT" 
 --out_path $OUTPUT_PATH
 
 
-python ic_light.py --input_img $LIGHT_IMG_PATH --out_path $OUTPUT_PATH --light_prompt "$LIGHT_PROMPT" --light_num_samples $LIGHT_NUM_SAMPLES --light_seed $LIGHT_SEED \
---light_steps $LIGHT_STEPS --light_a_prompt "$LIGHT_A_PROMPT" --light_n_prompt "$LIGHT_N_PROMPT" \
---light_cfg $LIGHT_CFG --light_highres_scale $LIGHT_HIGHRES_SCALE --light_highres_denoise $LIGHT_HIGHRES_DENOISE \
---light_lowres_denoise $LIGHT_LOWRES_DENOISE --light_bg_source $LIGHT_BG_SOURCE
+# python ic_light.py --input_img $LIGHT_IMG_PATH --out_path $OUTPUT_PATH --light_prompt "$LIGHT_PROMPT" --light_num_samples $LIGHT_NUM_SAMPLES --light_seed $LIGHT_SEED \
+# --light_steps $LIGHT_STEPS --light_a_prompt "$LIGHT_A_PROMPT" --light_n_prompt "$LIGHT_N_PROMPT" \
+# --light_cfg $LIGHT_CFG --light_highres_scale $LIGHT_HIGHRES_SCALE --light_highres_denoise $LIGHT_HIGHRES_DENOISE \
+# --light_lowres_denoise $LIGHT_LOWRES_DENOISE --light_bg_source $LIGHT_BG_SOURCE

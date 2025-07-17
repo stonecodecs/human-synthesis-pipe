@@ -6,7 +6,7 @@ from time import time
 from PIL import Image
 
 from ic_light import BGSource, resize_without_crop, resize_and_center_crop, process_relight
-from prompt_enhance import prompt_enhance
+from prompting.prompt_enhance import prompt_enhance
 from pose_utils.infinityU.infinityU import pose_synthesize
 
 def main():
@@ -23,7 +23,8 @@ def main():
     parser.add_argument("--pose_enable_realism", type=bool, default=True, help="Enable realism for pose generation")
     parser.add_argument("--pose_enable_anti_blur", type=bool, default=True, help="Enable anti-blur for pose generation")
     parser.add_argument("--pose_model_version", type=str, default="v1.0", help="Pose model version")
-    parser.add_argument("--flux_model_path", type=str, default="/workspace/leovol/models/FLUX.1-dev", help="Path to FLUX model directory")
+    parser.add_argument("--flux_model_path", type=str, default="/workspace/stonevol/ext_models/FLUX.1-dev", help="Path to FLUX model directory")
+    parser.add_argument("--infinite_model_path", type=str, default="ByteDance/InfiniteYou", help="Path to InfiniteYou model directory")
     parser.add_argument("--quantize_8bit", type=bool, default=True, help="Use 8-bit quantization")
     parser.add_argument("--cpu_offload", type=bool, default=True, help="Enable CPU offloading")
 
@@ -61,7 +62,7 @@ def main():
         control_image,
         pose_prompt,
         args.flux_model_path,  # Use command line parameter
-        'ByteDance/InfiniteYou',
+        args.infinite_model_path,
         'v1.0',
         args.pose_model_version,
         0,
