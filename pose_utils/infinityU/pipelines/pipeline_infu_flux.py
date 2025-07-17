@@ -145,7 +145,7 @@ class InfUFluxPipeline:
             self.infusenet = FluxControlNetModel.from_pretrained(infusenet_path, torch_dtype=torch.bfloat16)
         except:
             print("No InfiniteYou model found. Downloading from HuggingFace `ByteDance/InfiniteYou` to `./models/InfiniteYou` ...")
-            snapshot_download(repo_id='ByteDance/InfiniteYou', local_dir='./models/InfiniteYou', local_dir_use_symlinks=False)
+            snapshot_download(repo_id='ByteDance/InfiniteYou', local_dir='/workspace/stonevol/ext_models/InfiniteYou', local_dir_use_symlinks=False)
             infu_model_path = os.path.join('./models/InfiniteYou', f'infu_flux_{infu_flux_version}', model_version)
             infusenet_path = os.path.join(infu_model_path, 'InfuseNetModel')
             self.infusenet = FluxControlNetModel.from_pretrained(infusenet_path, torch_dtype=torch.bfloat16)

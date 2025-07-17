@@ -1,7 +1,7 @@
 #/bin/bash
 
-export INPUT_IMAGE="/mnt/d/consistent-3d-generation/samples/input1/CC32871A017_cropped_0220.png"
-export POSE_PROMPT="a woman stretching her arms"
+export INPUT_IMAGE="/workspace/datasetvol/mvhuman_data/mv_captures/100001/images_lr/CC32871A023/0010_img.jpg"
+export POSE_PROMPT="a woman crossing her arms"
 export POSE_SEED=12345
 export POSE_GUIDANCE_SCALE=7.5
 export POSE_STEPS=30
@@ -13,9 +13,11 @@ export POSE_ENABLE_ANTI_BLUR="false"
 export POSE_MODEL_VERSION="sim_stage1"
 export QUANTIZE_8BIT="true"
 export CPU_OFFLOAD="true"
+export FLUX_MODEL_PATH="/workspace/stonevol/ext_models/FLUX.1-dev"
+export INFINITE_MODEL_PATH="/workspace/stonevol/ext_models/InfiniteYou"
 
-export OUTPUT_PATH="/mnt/d/consistent-3d-generation/samples/synthesized_images"
-export LIGHT_IMG_PATH="/mnt/d/consistent-3d-generation/samples/synthesized_images/pose.png"
+export OUTPUT_PATH="/workspace/stonevol/infU_samples"
+export LIGHT_IMG_PATH="/workspace/stonevol/infU_samples/pose.png"
 export LIGHT_PROMPT="A beautiful sunset over the ocean"
 export LIGHT_NUM_SAMPLES=1
 export LIGHT_SEED=67890
@@ -32,7 +34,7 @@ python synthesize_pose.py --input_img $INPUT_IMAGE --pose_prompt "$POSE_PROMPT" 
 --pose_guidance_scale $POSE_GUIDANCE_SCALE --pose_steps $POSE_STEPS --pose_infusenet_cond_scale $POSE_INFUSENET_COND_SCALE \
 --pose_infusenet_guidance_start $POSE_INFUSENET_GUIDANCE_START --pose_infusenet_guidance_end $POSE_INFUSENET_GUIDANCE_END \
 --pose_enable_realism $POSE_ENABLE_REALISM --pose_enable_anti_blur $POSE_ENABLE_ANTI_BLUR --pose_model_version $POSE_MODEL_VERSION \
---quantize_8bit $QUANTIZE_8BIT --cpu_offload $CPU_OFFLOAD \
+--quantize_8bit $QUANTIZE_8BIT --cpu_offload $CPU_OFFLOAD --flux_model_path $FLUX_MODEL_PATH --infinite_model_path $INFINITE_MODEL_PATH \
 --out_path $OUTPUT_PATH
 
 
