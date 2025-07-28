@@ -69,6 +69,24 @@ def get_bbox_from_annot(annot):
     bbox = annot['annots'][0]['bbox']  # Assuming single person
     return [float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])]
 
+def crop_image(image_path, mask_path):
+    """Crop image based on crop parameters."""
+    img = np.array(Image.open(image_path))
+    mask = np.array(Image.open(mask_path))
+    img_masked = apply_mask(img, mask)
+    img_masked_pil = Image.fromarray(img_masked)
+
+    annots_path = image_path.replace('images_lr', 'annots').replace('_img.jpg', '_img.json')
+    annot = load_json(annots_path)
+
+    crop_params = get_bbox_from_annot(annot)
+    (center_x, center_y), (width, height) = get_bbox_center_and_size(crop_params)
+    max_dim = max(width, height)
+    half_size = max_dim // 2
+
+    cropped = img_masked_pil.crop([center_x - half_size, center_y - half_size, center_x + half_size, center_y + half_size])
+    return cropped
+
 def get_bbox_center_and_size(bbox):
     """Get center point and size of bbox."""
     x1, y1, x2, y2 = bbox

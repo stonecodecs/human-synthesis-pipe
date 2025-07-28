@@ -16,7 +16,8 @@ from torch.hub import download_url_to_file
 from tqdm import tqdm
 from time import time
 from prompt_enhance import prompt_enhance_light
-from crop import create_transforms_json, process_images_and_intrinsics, apply_mask
+from crop import create_transforms_json, crop_image, apply_mask
+from prompt_sampler import PromptSampler
 from tqdm import tqdm
 
 # 'stablediffusionapi/realistic-vision-v51'
@@ -345,10 +346,13 @@ def process_relight(input_fg, prompt, image_width, image_height, num_samples, se
     results = process(input_fg, prompt, image_width, image_height, num_samples, seed, steps, a_prompt, n_prompt, cfg, highres_scale, highres_denoise, lowres_denoise, bg_source)
     return input_fg, results
 
+def enhance_prompt_from_json(subject, prompt_json, prompt):
+    base_prompt = prompt_json[subject] + ", " + prompt
+    return base_prompt
 
 quick_prompts = [
     'sunshine from window',
-    'neon light, city',
+    'neon light, city', 
     'sunset over sea',
     'golden time',
     'sci-fi RGB glowing, cyberpunk',
@@ -360,7 +364,27 @@ quick_prompts = [
     'shadow from window',
     'soft studio lighting',
     'home atmosphere, cozy bedroom illumination',
-    'neon, Wong Kar-wai, warm'
+    'neon, Wong Kar-wai, warm',
+    'Soft natural light streaming through a large north-facing window on an overcast day',
+    'Warm afternoon sunlight filtering through sheer curtains in a living room',
+    'Harsh fluorescent ceiling lights in a typical office cubicle environment',
+    'Golden hour sunlight hitting the subject from a low angle during late afternoon',
+    "Cool blue light from a computer screen illuminating someone's face in a dark room",
+    'Bright white LED desk lamp providing focused task lighting for reading or work',
+    'Warm yellow light from a bedside table lamp creating a cozy nighttime atmosphere',
+    'Natural daylight from sliding glass doors leading to a backyard patio',
+    'Kitchen pendant lights hanging over an island providing focused downward illumination',
+    'Bathroom vanity mirror lights creating even front-facing illumination for grooming',
+    'Car headlights illuminating a person standing in a parking lot at night',
+    'Street lamp casting a pool of orange sodium light on a sidewalk',
+    'Living room floor lamp with a fabric shade creating soft ambient lighting',
+    'Natural sunlight bouncing off white walls in a bright, airy bedroom',
+    'Overhead track lighting in a retail store creating multiple directional light sources',
+    'Campfire light flickering and casting warm orange tones on faces around the fire',
+    'Television screen glow providing the only light source in a darkened family room',
+    'Morning sunlight streaming through venetian blinds creating striped shadow patterns',
+    'Porch light fixture illuminating the front entrance of a house at dusk',
+    'Restaurant booth lighting with warm pendant lights creating intimate dining atmosphere'
 ]
 quick_prompts = [[x] for x in quick_prompts]
 
@@ -385,7 +409,7 @@ if __name__ == "__main__":
 
     # Lighting args
     parser.add_argument("--input_dir", type=str, required=True, help="Path to the input directory")
-    parser.add_argument("--out_path", type=str, required=False, default="synthesized_images", help="Path to the output directory")
+    parser.add_argument("--out_path", type=str, required=False, default="relit_images", help="Path to the output directory")
     parser.add_argument("--light_prompt", type=str, required=True, help="Prompt for the image generation")
     parser.add_argument("--light_num_samples", type=int, default=1, help="Number of samples to generate")
     parser.add_argument("--light_seed", type=int, default=12345, help="Random seed for generation")
@@ -397,72 +421,116 @@ if __name__ == "__main__":
     parser.add_argument("--light_highres_denoise", type=float, default=0.5, help="Highres denoise")
     parser.add_argument("--light_lowres_denoise", type=float, default=0.9, help="Lowres denoise")
     parser.add_argument("--light_bg_source", type=str, default=BGSource.NONE.value, help="Background source")
+    parser.add_argument("--step_size", type=int, default=10, help="Step size (of timesteps) to relight")
+    parser.add_argument("--caption_json", type=str, required=True, default="/workspace/datasetvol/mvhuman_data/text_description_48.json", help="Path to the caption json file")
+    parser.add_argument("--prompt_file", type=str, required=True, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
     args = parser.parse_args()
 
-    # Create output directory with structure same as images_lr folder
+    # Create output directory with structure the same as the MVHN dataset dir
     if not os.path.exists(args.out_path):
         os.makedirs(args.out_path)
-        os.makedirs(os.path.join(args.out_path, 'images_lr'))
+
+    # load the prompt json file
+    with open(args.caption_json, 'r') as f:
+        caption_json = json.load(f)
+
+    prompt_sampler = PromptSampler(args.prompt_file, num_samples=1)
+
+    # for each subject
+    subjects = sorted(os.listdir(args.input_dir))
+    for subject in subjects:
+        # for each camera
+        camera_ids = sorted(os.listdir(os.path.join(args.input_dir, subject, 'images_lr')))
+        for camera_id in camera_ids:
+            # for each time step
+            timestep_dir = os.path.join(args.input_dir, subject, 'images_lr', camera_id)
+            time_steps = sorted(os.listdir(timestep_dir))
+            for time_step in time_steps[::args.step_size]:
+                image_path = os.path.join(timestep_dir, f"{time_step}_img.jpg")
+                mask_path = os.path.join(timestep_dir, f"{time_step}_img_fmask.png")
+
+                # crop image (based on annots center OR crop_params.npz if exists)
+                cropped_image = crop_image(
+                    image_path,
+                    mask_path
+                )
+                np_cropped = np.array(cropped_image)
+
+                # enhance prompt
+                prompt = prompt_sampler.sample_prompt()
+                light_prompt = enhance_prompt_from_json(subject, caption_json, prompt)
+            
+                # relight the image
+                h, w, _ = np_cropped.shape
+
+                h = h - (h % 8)
+                w = w - (w % 8)
+
+                input_fg, results = process_relight(
+                    np_cropped,
+                    light_prompt,
+                    w,
+                    h,
+                    args.light_num_samples,
+                    args.light_seed,
+                    args.light_steps,
+                    args.light_a_prompt,
+                    args.light_n_prompt,
+                    args.light_cfg,
+                    args.light_highres_scale,
+                    args.light_highres_denoise,
+                    args.light_lowres_denoise,
+                    BGSource(args.light_bg_source)
+                )
+
+                # Assume that we just generate one image for simplicity
+                # Save the output image
+                os.makedirs(os.path.join(args.out_path, subject, 'images_lr', camera_id), exist_ok=True)
+                Image.fromarray(results[0]).save(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_image.png"))
 
 
-    # List all time step
-    camera_ids = os.listdir(os.path.join(args.input_dir, 'images_lr'))
-    first_camera_id = camera_ids[0]
-    for camera_id in camera_ids:
-        if not os.path.exists(os.path.join(args.out_path, 'images_lr', camera_id)):
-            # Create the directory for each camera in output directory
-            os.makedirs(os.path.join(args.out_path, 'images_lr', camera_id))
 
-    all_time_steps = os.listdir(os.path.join(args.input_dir, 'images_lr', first_camera_id))
-    all_time_steps = [x.split('_')[0] for x in all_time_steps]
-
-    for timestep in tqdm(all_time_steps, desc="Processing Time Steps"):
-        # Get crop params
-        crop_params = process_images_and_intrinsics(
-            args.input_dir,
-            timestep
-        )
+    # for timestep in tqdm(all_time_steps, desc="Processing Time Steps"):
+    #     # Relight
+    #     for camera_id in tqdm(camera_ids, desc=f"Processing Cameras for Timestep {timestep}", leave=False):
+    #         # Get image
+    #         image_path = os.path.join(args.input_dir, 'images_lr', camera_id, f"{timestep}_img.jpg")
+    #         pose_image = Image.open(image_path)
+    #         pose_image = np.array(pose_image)
+    #         mask_path = os.path.join(args.input_dir, 'fmask_lr', camera_id, f"{timestep}_img_fmask.png")
+    #         mask_image = np.array(Image.open(mask_path))
+    #         img_masked = apply_mask(pose_image, mask_image)
+    #         img_masked_pil = Image.fromarray(img_masked)
+    #         crop = crop_params[camera_id]['crop']
+    #         cropped = img_masked_pil.crop(crop)
+    #         np_cropped = np.array(cropped)
         
-        # Relight
-        for camera_id in tqdm(camera_ids, desc=f"Processing Cameras for Timestep {timestep}", leave=False):
-            # Get image
-            image_path = os.path.join(args.input_dir, 'images_lr', camera_id, f"{timestep}_img.jpg")
-            pose_image = Image.open(image_path)
-            pose_image = np.array(pose_image)
-            mask_path = os.path.join(args.input_dir, 'fmask_lr', camera_id, f"{timestep}_img_fmask.png")
-            mask_image = np.array(Image.open(mask_path))
-            img_masked = apply_mask(pose_image, mask_image)
-            img_masked_pil = Image.fromarray(img_masked)
-            crop = crop_params[camera_id]['crop']
-            cropped = img_masked_pil.crop(crop)
-            np_cropped = np.array(cropped)
+    #         # Enhance prompt
+    #         light_prompt = prompt_enhance_light(cropped, args.light_prompt)
         
-            # Enhance prompt
-            light_prompt = prompt_enhance_light(cropped, args.light_prompt)
-        
-            h, w, _ = np_cropped.shape
+    #         h, w, _ = np_cropped.shape
 
-            h = h - (h % 8)
-            w = w - (w % 8)
+    #         h = h - (h % 8)
+    #         w = w - (w % 8)
 
-            input_fg, results = process_relight(
-                np_cropped,
-                light_prompt,
-                w,
-                h,
-                args.light_num_samples,
-                args.light_seed,
-                args.light_steps,
-                args.light_a_prompt,
-                args.light_n_prompt,
-                args.light_cfg,
-                args.light_highres_scale,
-                args.light_highres_denoise,
-                args.light_lowres_denoise,
-                BGSource(args.light_bg_source)
-            )
+    #         input_fg, results = process_relight(
+    #             np_cropped,
+    #             light_prompt,
+    #             w,
+    #             h,
+    #             args.light_num_samples,
+    #             args.light_seed,
+    #             args.light_steps,
+    #             args.light_a_prompt,
+    #             args.light_n_prompt,
+    #             args.light_cfg,
+    #             args.light_highres_scale,
+    #             args.light_highres_denoise,
+    #             args.light_lowres_denoise,
+    #             BGSource(args.light_bg_source)
+    #         )
 
-            # Assume that we just generate one image for simplicity
-            # Save the output image
-            os.makedirs(os.path.join(args.out_path, 'images_lr', camera_id), exist_ok=True)
-            Image.fromarray(results[0]).save(os.path.join(args.out_path, 'images_lr', camera_id, f"{timestep}_image.png"))
+    #         # Assume that we just generate one image for simplicity
+    #         # Save the output image
+    #         os.makedirs(os.path.join(args.out_path, 'images_lr', camera_id), exist_ok=True)
+    #         Image.fromarray(results[0]).save(os.path.join(args.out_path, 'images_lr', camera_id, f"{timestep}_image.png"))
