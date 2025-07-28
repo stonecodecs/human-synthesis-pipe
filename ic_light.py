@@ -19,6 +19,7 @@ from prompt_enhance import prompt_enhance_light
 from crop import create_transforms_json, crop_image, apply_mask
 from prompt_sampler import PromptSampler
 from tqdm import tqdm
+import json
 
 # 'stablediffusionapi/realistic-vision-v51'
 # 'runwayml/stable-diffusion-v1-5'
@@ -410,7 +411,7 @@ if __name__ == "__main__":
     # Lighting args
     parser.add_argument("--input_dir", type=str, required=True, help="Path to the input directory")
     parser.add_argument("--out_path", type=str, required=False, default="relit_images", help="Path to the output directory")
-    parser.add_argument("--light_prompt", type=str, required=True, help="Prompt for the image generation")
+    # parser.add_argument("--light_prompt", type=str, required=True, help="Prompt for the image generation")
     parser.add_argument("--light_num_samples", type=int, default=1, help="Number of samples to generate")
     parser.add_argument("--light_seed", type=int, default=12345, help="Random seed for generation")
     parser.add_argument("--light_steps", type=int, default=25, help="Number of steps for generation")
@@ -422,8 +423,8 @@ if __name__ == "__main__":
     parser.add_argument("--light_lowres_denoise", type=float, default=0.9, help="Lowres denoise")
     parser.add_argument("--light_bg_source", type=str, default=BGSource.NONE.value, help="Background source")
     parser.add_argument("--step_size", type=int, default=10, help="Step size (of timesteps) to relight")
-    parser.add_argument("--caption_json", type=str, required=True, default="/workspace/datasetvol/mvhuman_data/text_description_48.json", help="Path to the caption json file")
-    parser.add_argument("--prompt_file", type=str, required=True, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
+    parser.add_argument("--caption_json", type=str, default="/workspace/datasetvol/mvhuman_data/text_description_48.json", help="Path to the caption json file")
+    parser.add_argument("--prompt_file", type=str, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
     args = parser.parse_args()
 
     # Create output directory with structure the same as the MVHN dataset dir
