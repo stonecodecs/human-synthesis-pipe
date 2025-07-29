@@ -20,6 +20,7 @@ from crop import create_transforms_json, crop_image, apply_mask
 from prompt_sampler import PromptSampler
 from tqdm import tqdm
 import json
+import cv2
 
 # 'stablediffusionapi/realistic-vision-v51'
 # 'runwayml/stable-diffusion-v1-5'
@@ -418,11 +419,11 @@ if __name__ == "__main__":
     parser.add_argument("--light_a_prompt", type=str, default="best quality", help="Added prompt")
     parser.add_argument("--light_n_prompt", type=str, default="lowres, bad anatomy, bad hands, cropped, worst quality", help="Negative prompt")
     parser.add_argument("--light_cfg", type=float, default=2.0, help="CFG scale")
-    parser.add_argument("--light_highres_scale", type=float, default=1.5, help="Highres scale")
+    parser.add_argument("--light_highres_scale", type=float, default=1024/576, help="Highres scale")
     parser.add_argument("--light_highres_denoise", type=float, default=0.5, help="Highres denoise")
     parser.add_argument("--light_lowres_denoise", type=float, default=0.9, help="Lowres denoise")
     parser.add_argument("--light_bg_source", type=str, default=BGSource.NONE.value, help="Background source")
-    parser.add_argument("--step_size", type=int, default=10, help="Step size (of timesteps) to relight")
+    parser.add_argument("--step_size", type=int, default=20, help="Step size (of timesteps) to relight")
     parser.add_argument("--caption_json", type=str, default="/workspace/datasetvol/mvhuman_data/text_description_48.json", help="Path to the caption json file")
     parser.add_argument("--prompt_file", type=str, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
     args = parser.parse_args()
@@ -439,27 +440,32 @@ if __name__ == "__main__":
 
     # for each subject
     subjects = sorted(os.listdir(args.input_dir))
-    for subject in subjects:
+    for subject in tqdm(subjects, desc="Processing Subjects"):
         # for each camera
         camera_ids = sorted(os.listdir(os.path.join(args.input_dir, subject, 'images_lr')))
-        for camera_id in camera_ids:
+        for camera_id in tqdm(camera_ids, desc=f"Processing Cameras for Subject {subject}", leave=False):
             # for each time step
             timestep_dir = os.path.join(args.input_dir, subject, 'images_lr', camera_id)
             time_steps = sorted(os.listdir(timestep_dir))
-            for time_step in time_steps[::args.step_size]:
-                image_path = os.path.join(timestep_dir, f"{time_step}_img.jpg")
-                mask_path = os.path.join(timestep_dir, f"{time_step}_img_fmask.png")
+            for time_step in tqdm(time_steps[::args.step_size], desc=f"Processing Time Steps for Camera {camera_id}", leave=False):
+                timestep = time_step[:4]
+                if os.path.exists(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_image.png")):
+                    continue # if already processed, skip
+                image_path = os.path.join(timestep_dir, f"{timestep}_img.jpg")
+                mask_path = os.path.join(timestep_dir, f"{timestep}_img_fmask.png").replace('images_lr', 'fmask_lr')
 
-                # crop image (based on annots center OR crop_params.npz if exists)
+                # crop image (based on annots center)
                 cropped_image = crop_image(
                     image_path,
                     mask_path
                 )
                 np_cropped = np.array(cropped_image)
+                np_cropped = cv2.resize(np_cropped, (576, 576), interpolation=cv2.INTER_LANCZOS4)
 
                 # enhance prompt
-                prompt = prompt_sampler.sample_prompt()
+                prompt = prompt_sampler.sample_prompt()[0]
                 light_prompt = enhance_prompt_from_json(subject, caption_json, prompt)
+                print(f"Prompt: {light_prompt}")
             
                 # relight the image
                 h, w, _ = np_cropped.shape
@@ -487,7 +493,7 @@ if __name__ == "__main__":
                 # Assume that we just generate one image for simplicity
                 # Save the output image
                 os.makedirs(os.path.join(args.out_path, subject, 'images_lr', camera_id), exist_ok=True)
-                Image.fromarray(results[0]).save(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_image.png"))
+                Image.fromarray(results[0]).save(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_img.png"))
 
 
 

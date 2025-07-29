@@ -1,19 +1,19 @@
 #/bin/bash
-export INPUT_PATH="/workspace/datasetvol/mvhuman_data/mv_captures/100001"
-export OUTPUT_PATH="/workspace/ic-light-outputs/100001"
-export LIGHT_PROMPT="A spotlight from above shines downward."
+export INPUT_PATH="/workspace/datasetvol/mvhuman_data/mv_captures"
+export OUTPUT_PATH="/workspace/iclight_outputs"
 export LIGHT_NUM_SAMPLES=1
 export LIGHT_SEED=67890
 export LIGHT_STEPS=25
 export LIGHT_A_PROMPT="best quality"
-export LIGHT_N_PROMPT="lowres, bad anatomy, bad hands, cropped, worst quality"
+export LIGHT_N_PROMPT="lowres, bad anatomy, bad hands, cropped, worst quality, pitch black, multiple people"
 export LIGHT_CFG=2.0
-export LIGHT_HIGHRES_SCALE=0.5
+export LIGHT_HIGHRES_SCALE=1024/576
 export LIGHT_HIGHRES_DENOISE=0.75
 export LIGHT_BG_SOURCE="None"
 export LIGHT_LOWRES_DENOISE=0.9
+export STEP_SIZE=20
 
-python ic_light.py --input_dir $INPUT_PATH --out_path $OUTPUT_PATH --light_prompt "$LIGHT_PROMPT" --light_num_samples $LIGHT_NUM_SAMPLES --light_seed $LIGHT_SEED \
+python ic_light.py --input_dir $INPUT_PATH --out_path $OUTPUT_PATH --light_num_samples $LIGHT_NUM_SAMPLES --light_seed $LIGHT_SEED \
 --light_steps $LIGHT_STEPS --light_a_prompt "$LIGHT_A_PROMPT" --light_n_prompt "$LIGHT_N_PROMPT" \
 --light_cfg $LIGHT_CFG --light_highres_scale $LIGHT_HIGHRES_SCALE --light_highres_denoise $LIGHT_HIGHRES_DENOISE \
---light_lowres_denoise $LIGHT_LOWRES_DENOISE --light_bg_source $LIGHT_BG_SOURCE
+--light_lowres_denoise $LIGHT_LOWRES_DENOISE --light_bg_source $LIGHT_BG_SOURCE --step_size $STEP_SIZE

@@ -24,10 +24,11 @@ def create_transform_matrix(translation, rotation):
     transform[:3, :3] = rotation
     return transform.tolist()
 
-def apply_mask(img, mask):
+def apply_mask(img, mask, background_color=(0, 0, 0)):
     # binary mask (make sure it's reshaped to match)
     mask = mask / 255
     masked_img = img * mask.reshape(*mask.shape, 1)
+    masked_img[mask == 0] = background_color
     return masked_img.astype(np.uint8)
     
 def get_multiview_sample(image_path, mask_path, timestep: int, from_cameras: None):
@@ -69,20 +70,22 @@ def get_bbox_from_annot(annot):
     bbox = annot['annots'][0]['bbox']  # Assuming single person
     return [float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])]
 
-def crop_image(image_path, mask_path):
+def crop_image(image_path, mask_path, background_color=(0, 0, 0)):
     """Crop image based on crop parameters."""
     img = np.array(Image.open(image_path))
     mask = np.array(Image.open(mask_path))
-    img_masked = apply_mask(img, mask)
+    img_masked = apply_mask(img, mask, background_color)
     img_masked_pil = Image.fromarray(img_masked)
 
     annots_path = image_path.replace('images_lr', 'annots').replace('_img.jpg', '_img.json')
     annot = load_json(annots_path)
 
-    crop_params = get_bbox_from_annot(annot)
+    crop_params = np.array(get_bbox_from_annot(annot)) * 0.5 # MVHN 2x downsample
     (center_x, center_y), (width, height) = get_bbox_center_and_size(crop_params)
-    max_dim = max(width, height)
-    half_size = max_dim // 2
+    max_dim = max(int(width), int(height))
+    center_x = int(center_x)
+    center_y = int(center_y)
+    half_size = int(max_dim // 2)
 
     cropped = img_masked_pil.crop([center_x - half_size, center_y - half_size, center_x + half_size, center_y + half_size])
     return cropped
