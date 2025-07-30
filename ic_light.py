@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import safetensors.torch as sf
 import argparse
+import random
 
 from PIL import Image
 from diffusers import StableDiffusionPipeline, StableDiffusionImg2ImgPipeline
@@ -405,11 +406,32 @@ class BGSource(Enum):
     TOP = "Top Light"
     BOTTOM = "Bottom Light"
 
+def get_pod_index():
+    """Get the pod index from environment variables."""
+    # Try different ways to get pod index
+    return int(os.environ.get('JOB_COMPLETION_INDEX', 0))
+
+def get_assigned_subjects(root_dir, pod_index, total_pods):
+    """Get the list of subjects assigned to this pod based on index."""
+    all_subjects = []
+    for item in os.listdir(root_dir):
+        subject_path = os.path.join(root_dir, item)
+        if os.path.isdir(subject_path):
+            all_subjects.append(item)
+    
+    # Sort for consistent partitioning
+    all_subjects = sorted(all_subjects)
+    
+    # Assign subjects to pods using modulo
+    assigned_subjects = []
+    for i, subject in enumerate(all_subjects):
+        if i % total_pods == pod_index:
+            assigned_subjects.append(subject)
+    
+    return assigned_subjects
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ICLight")
-
-    # Lighting args
     parser.add_argument("--input_dir", type=str, required=True, help="Path to the input directory")
     parser.add_argument("--out_path", type=str, required=False, default="relit_images", help="Path to the output directory")
     # parser.add_argument("--light_prompt", type=str, required=True, help="Prompt for the image generation")
@@ -428,6 +450,12 @@ if __name__ == "__main__":
     parser.add_argument("--prompt_file", type=str, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
     args = parser.parse_args()
 
+    pod_index = get_pod_index()
+    total_pods = int(os.environ.get('JOB_PARALLELISM', 1))
+    pod_id = os.environ.get('HOSTNAME', f'pod_{random.randint(1000, 9999)}')
+    assigned_subjects = get_assigned_subjects(args.input_dir, pod_index, total_pods)
+    print(f"Pod {pod_id} assigned subjects {assigned_subjects[:5]}...")
+
     # Create output directory with structure the same as the MVHN dataset dir
     if not os.path.exists(args.out_path):
         os.makedirs(args.out_path)
@@ -439,8 +467,7 @@ if __name__ == "__main__":
     prompt_sampler = PromptSampler(args.prompt_file, num_samples=1)
 
     # for each subject
-    subjects = sorted(os.listdir(args.input_dir))
-    for subject in tqdm(subjects, desc="Processing Subjects"):
+    for subject in tqdm(assigned_subjects, desc="Processing Subjects"):
         # for each camera
         camera_ids = sorted(os.listdir(os.path.join(args.input_dir, subject, 'images_lr')))
         for camera_id in tqdm(camera_ids, desc=f"Processing Cameras for Subject {subject}", leave=False):
@@ -494,8 +521,7 @@ if __name__ == "__main__":
                 # Save the output image
                 os.makedirs(os.path.join(args.out_path, subject, 'images_lr', camera_id), exist_ok=True)
                 Image.fromarray(results[0]).save(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_img.png"))
-
-
+    print(f"[ICLight] Pod {pod_id} completed generations!")
 
     # for timestep in tqdm(all_time_steps, desc="Processing Time Steps"):
     #     # Relight
