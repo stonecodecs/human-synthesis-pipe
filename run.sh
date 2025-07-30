@@ -11,7 +11,7 @@ export LIGHT_HIGHRES_SCALE=1.77777777778 # 1024/576
 export LIGHT_HIGHRES_DENOISE=0.75
 export LIGHT_BG_SOURCE="None"
 export LIGHT_LOWRES_DENOISE=0.9
-export STEP_SIZE=20
+export STEP_SIZE=60
 
 python ic_light.py --input_dir $INPUT_PATH --out_path $OUTPUT_PATH --light_num_samples $LIGHT_NUM_SAMPLES --light_seed $LIGHT_SEED \
 --light_steps $LIGHT_STEPS --light_a_prompt "$LIGHT_A_PROMPT" --light_n_prompt "$LIGHT_N_PROMPT" \
