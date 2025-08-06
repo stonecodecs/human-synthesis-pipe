@@ -70,9 +70,11 @@ def get_bbox_from_annot(annot):
     bbox = annot['annots'][0]['bbox']  # Assuming single person
     return [float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])]
 
-def crop_image(image_path, mask_path, background_color=(0, 0, 0)):
+def crop_image(image_path, mask_path, background_color=(0, 0, 0), expected_shape=(1500, 2048)):
     """Crop image based on crop parameters."""
     img = np.array(Image.open(image_path))
+    if expected_shape is not None: # otherwise, ignore shape check
+        assert img.shape[:2] == expected_shape, f"Image {image_path} is not the expected shape {expected_shape}. Got {img.shape[:2]} instead."
     mask = np.array(Image.open(mask_path))
     img_masked = apply_mask(img, mask, background_color)
     img_masked_pil = Image.fromarray(img_masked)

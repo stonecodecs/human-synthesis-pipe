@@ -465,6 +465,7 @@ if __name__ == "__main__":
         caption_json = json.load(f)
 
     prompt_sampler = PromptSampler(args.prompt_file, num_samples=1)
+    paths_with_errors = []
 
     # for each subject
     for subject in tqdm(assigned_subjects, desc="Processing Subjects"):
@@ -482,46 +483,64 @@ if __name__ == "__main__":
                 mask_path = os.path.join(timestep_dir, f"{timestep}_img_fmask.png").replace('images_lr', 'fmask_lr')
 
                 # crop image (based on annots center)
-                cropped_image = crop_image(
-                    image_path,
-                    mask_path
-                )
-                np_cropped = np.array(cropped_image)
-                np_cropped = cv2.resize(np_cropped, (576, 576), interpolation=cv2.INTER_LANCZOS4)
+                try:
+                    cropped_image = crop_image(
+                        image_path,
+                        mask_path
+                    )
+               
 
-                # enhance prompt
-                prompt = prompt_sampler.sample_prompt()[0]
-                light_prompt = enhance_prompt_from_json(subject, caption_json, prompt)
-                print(f"Prompt: {light_prompt}")
-            
-                # relight the image
-                h, w, _ = np_cropped.shape
+                    np_cropped = np.array(cropped_image)
+                    np_cropped = cv2.resize(np_cropped, (576, 576), interpolation=cv2.INTER_LANCZOS4)
 
-                h = h - (h % 8)
-                w = w - (w % 8)
+                    # enhance prompt
+                    prompt = prompt_sampler.sample_prompt()[0]
+                    light_prompt = enhance_prompt_from_json(subject, caption_json, prompt)
+                    print(f"Prompt: {light_prompt}")
+                
+                    # relight the image
+                    h, w, _ = np_cropped.shape
 
-                input_fg, results = process_relight(
-                    np_cropped,
-                    light_prompt,
-                    w,
-                    h,
-                    args.light_num_samples,
-                    args.light_seed,
-                    args.light_steps,
-                    args.light_a_prompt,
-                    args.light_n_prompt,
-                    args.light_cfg,
-                    args.light_highres_scale,
-                    args.light_highres_denoise,
-                    args.light_lowres_denoise,
-                    BGSource(args.light_bg_source)
-                )
+                    h = h - (h % 8)
+                    w = w - (w % 8)
 
-                # Assume that we just generate one image for simplicity
-                # Save the output image
-                os.makedirs(os.path.join(args.out_path, subject, 'images_lr', camera_id), exist_ok=True)
-                Image.fromarray(results[0]).save(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_img.png"))
+                    input_fg, results = process_relight(
+                        np_cropped,
+                        light_prompt,
+                        w,
+                        h,
+                        args.light_num_samples,
+                        args.light_seed,
+                        args.light_steps,
+                        args.light_a_prompt,
+                        args.light_n_prompt,
+                        args.light_cfg,
+                        args.light_highres_scale,
+                        args.light_highres_denoise,
+                        args.light_lowres_denoise,
+                        BGSource(args.light_bg_source)
+                    )
+
+                    # Assume that we just generate one image for simplicity
+                    # Save the output image
+                    os.makedirs(os.path.join(args.out_path, subject, 'images_lr', camera_id), exist_ok=True)
+                    Image.fromarray(results[0]).save(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_img.png"))
+                    print(f"Saved image to {os.path.join(args.out_path, subject, 'images_lr', camera_id, f'{timestep}_img.png')}")
+
+                except Exception as e: # if any error occurs, skip this image and store an error log
+                    print(f"Error cropping image {image_path}: {e}")
+                    paths_with_errors.append(image_path)
+                    continue
+
     print(f"[ICLight] Pod {pod_id} completed generations!")
+    print(f"[ICLight] Pod {pod_id} had {len(paths_with_errors)} errors.")
+
+    # Write paths with errors to file
+    error_log_path = os.path.join(args.out_path, f'iclight_errors.txt')
+    with open(error_log_path, 'a') as f:
+        for path in paths_with_errors:
+            f.write(f"{path}\n")
+    print(f"Wrote {len(paths_with_errors)} error paths to {error_log_path}")
 
     # for timestep in tqdm(all_time_steps, desc="Processing Time Steps"):
     #     # Relight
