@@ -477,7 +477,7 @@ if __name__ == "__main__":
             time_steps = sorted(os.listdir(timestep_dir))
             for time_step in tqdm(time_steps[::args.step_size], desc=f"Processing Time Steps for Camera {camera_id}", leave=False):
                 timestep = time_step[:4]
-                if os.path.exists(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_image.png")):
+                if os.path.exists(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_img.png")):
                     continue # if already processed, skip
                 image_path = os.path.join(timestep_dir, f"{timestep}_img.jpg")
                 mask_path = os.path.join(timestep_dir, f"{timestep}_img_fmask.png").replace('images_lr', 'fmask_lr')
