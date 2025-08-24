@@ -70,7 +70,29 @@ def get_bbox_from_annot(annot):
     bbox = annot['annots'][0]['bbox']  # Assuming single person
     return [float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])]
 
-def crop_image(image_path, mask_path, background_color=(0, 0, 0), expected_shape=(1500, 2048)):
+# def crop_image(image_path, mask_path, background_color=(0, 0, 0), expected_shape=(1500, 2048), padding=(0,0,0,0)):
+#     """Crop image based on crop parameters."""
+#     img = np.array(Image.open(image_path))
+#     if expected_shape is not None: # otherwise, ignore shape check
+#         assert img.shape[:2] == expected_shape, f"Image {image_path} is not the expected shape {expected_shape}. Got {img.shape[:2]} instead."
+#     mask = np.array(Image.open(mask_path))
+#     img_masked = apply_mask(img, mask, background_color)
+#     img_masked_pil = Image.fromarray(img_masked)
+
+#     annots_path = image_path.replace('images_lr', 'annots').replace('_img.jpg', '_img.json')
+#     annot = load_json(annots_path)
+
+#     crop_params = np.array(get_bbox_from_annot(annot)) * 0.5 # MVHN 2x downsample
+#     (center_x, center_y), (width, height) = get_bbox_center_and_size(crop_params)
+#     max_dim = max(int(width), int(height))
+#     center_x = int(center_x)
+#     center_y = int(center_y)
+#     half_size = int(max_dim // 2)
+
+#     cropped = img_masked_pil.crop([center_x - half_size, center_y - half_size, center_x + half_size, center_y + half_size])
+#     return cropped
+
+def crop_image(image_path, mask_path, background_color=(0, 0, 0), expected_shape=(1500, 2048), padding=0):
     """Crop image based on crop parameters."""
     img = np.array(Image.open(image_path))
     if expected_shape is not None: # otherwise, ignore shape check
@@ -87,9 +109,33 @@ def crop_image(image_path, mask_path, background_color=(0, 0, 0), expected_shape
     max_dim = max(int(width), int(height))
     center_x = int(center_x)
     center_y = int(center_y)
-    half_size = int(max_dim // 2)
+    half_size = int(max_dim // 2) + padding
 
-    cropped = img_masked_pil.crop([center_x - half_size, center_y - half_size, center_x + half_size, center_y + half_size])
+    left = center_x - half_size
+    top = center_y - half_size
+    right = center_x + half_size
+    bottom = center_y + half_size
+
+    # Compute required padding if the crop box is out of bounds
+    img_w, img_h = img_masked_pil.size
+    pad_left = max(0, -int(left))
+    pad_top = max(0, -int(top))
+    pad_right = max(0, int(right) - img_w)
+    pad_bottom = max(0, int(bottom) - img_h)
+
+    if pad_left or pad_top or pad_right or pad_bottom:
+        img_masked_pil = ImageOps.expand(
+            img_masked_pil,
+            border=(pad_left, pad_top, pad_right, pad_bottom),
+            fill=background_color
+        )
+        # Shift box by the padding added on left/top to keep the same center
+        left += pad_left
+        right += pad_left
+        top += pad_top
+        bottom += pad_top
+
+    cropped = img_masked_pil.crop([int(left), int(top), int(right), int(bottom)])
     return cropped
 
 def get_bbox_center_and_size(bbox):

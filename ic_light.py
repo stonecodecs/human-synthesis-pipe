@@ -448,6 +448,7 @@ if __name__ == "__main__":
     parser.add_argument("--step_size", type=int, default=20, help="Step size (of timesteps) to relight")
     parser.add_argument("--caption_json", type=str, default="/workspace/datasetvol/mvhuman_data/text_description_48.json", help="Path to the caption json file")
     parser.add_argument("--prompt_file", type=str, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
+    parser.add_argument("--padding", type=int, default=0, help="Padding for the crop")
     args = parser.parse_args()
 
     pod_index = get_pod_index()
@@ -486,7 +487,8 @@ if __name__ == "__main__":
                 try:
                     cropped_image = crop_image(
                         image_path,
-                        mask_path
+                        mask_path,
+                        padding=abs(args.padding)
                     )
                
 
