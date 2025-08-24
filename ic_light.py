@@ -449,6 +449,7 @@ if __name__ == "__main__":
     parser.add_argument("--caption_json", type=str, default="/workspace/datasetvol/mvhuman_data/text_description_48.json", help="Path to the caption json file")
     parser.add_argument("--prompt_file", type=str, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
     parser.add_argument("--padding", type=int, default=0, help="Padding for the crop")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing images.")
     args = parser.parse_args()
 
     pod_index = get_pod_index()
@@ -478,7 +479,7 @@ if __name__ == "__main__":
             time_steps = sorted(os.listdir(timestep_dir))
             for time_step in tqdm(time_steps[::args.step_size], desc=f"Processing Time Steps for Camera {camera_id}", leave=False):
                 timestep = time_step[:4]
-                if os.path.exists(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_img.png")):
+                if os.path.exists(os.path.join(args.out_path, subject, 'images_lr', camera_id, f"{timestep}_img.png")) and not args.force:
                     continue # if already processed, skip
                 image_path = os.path.join(timestep_dir, f"{timestep}_img.jpg")
                 mask_path = os.path.join(timestep_dir, f"{timestep}_img_fmask.png").replace('images_lr', 'fmask_lr')
