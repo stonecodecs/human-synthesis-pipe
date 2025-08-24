@@ -24,4 +24,4 @@ done
 python ic_light.py --input_dir $INPUT_PATH --out_path $OUTPUT_PATH --light_num_samples $LIGHT_NUM_SAMPLES --light_seed $LIGHT_SEED \
 --light_steps $LIGHT_STEPS --light_a_prompt "$LIGHT_A_PROMPT" --light_n_prompt "$LIGHT_N_PROMPT" \
 --light_cfg $LIGHT_CFG --light_highres_scale $LIGHT_HIGHRES_SCALE --light_highres_denoise $LIGHT_HIGHRES_DENOISE \
---light_lowres_denoise $LIGHT_LOWRES_DENOISE --light_bg_source $LIGHT_BG_SOURCE --step_size $STEP_SIZE --cropping 60 $FORCE_FLAG
+--light_lowres_denoise $LIGHT_LOWRES_DENOISE --light_bg_source $LIGHT_BG_SOURCE --step_size $STEP_SIZE --padding 60 $FORCE_FLAG
