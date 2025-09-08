@@ -411,12 +411,12 @@ def get_pod_index():
     # Try different ways to get pod index
     return int(os.environ.get('JOB_COMPLETION_INDEX', 0))
 
-def get_assigned_subjects(root_dir, pod_index, total_pods):
+def get_assigned_subjects(root_dir, pod_index, total_pods, blacklist):
     """Get the list of subjects assigned to this pod based on index."""
     all_subjects = []
     for item in os.listdir(root_dir):
         subject_path = os.path.join(root_dir, item)
-        if os.path.isdir(subject_path):
+        if os.path.isdir(subject_path) and item not in blacklist:
             all_subjects.append(item)
     
     # Sort for consistent partitioning
@@ -429,6 +429,12 @@ def get_assigned_subjects(root_dir, pod_index, total_pods):
             assigned_subjects.append(subject)
     
     return assigned_subjects
+
+def get_blacklist(blacklist_file):
+    if blacklist_file == "":
+        return []
+    with open(blacklist_file, 'r') as f:
+        return [line.strip() for line in f.readlines()]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ICLight")
@@ -450,12 +456,16 @@ if __name__ == "__main__":
     parser.add_argument("--prompt_file", type=str, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
     parser.add_argument("--padding", type=int, default=0, help="Padding for the crop")
     parser.add_argument("--force", action="store_true", help="Overwrite existing images.")
+    parser.add_argument("--blacklist_file", type=str, default="/workspace/stonevol/mvhn_iclight_blacklist.txt", help="Path to the blacklist file (excludes subjects).")
     args = parser.parse_args()
 
     pod_index = get_pod_index()
     total_pods = int(os.environ.get('JOB_PARALLELISM', 1))
     pod_id = os.environ.get('HOSTNAME', f'pod_{random.randint(1000, 9999)}')
-    assigned_subjects = get_assigned_subjects(args.input_dir, pod_index, total_pods)
+    blacklist = get_blacklist(args.blacklist_file)
+    if len(blacklist) > 0:
+        print(f"Loaded blacklist file with {len(blacklist)} subjects.")
+    assigned_subjects = get_assigned_subjects(args.input_dir, pod_index, total_pods, blacklist)
     print(f"Pod {pod_id} assigned subjects {assigned_subjects[:5]}...")
 
     # Create output directory with structure the same as the MVHN dataset dir
