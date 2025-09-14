@@ -12,7 +12,7 @@ export LIGHT_HIGHRES_DENOISE=0.75
 export LIGHT_BG_SOURCE="None"
 export LIGHT_LOWRES_DENOISE=0.9
 export STEP_SIZE=60
-export BLACKLIST_FILE="/workspace/stonevol/mvhn_iclight_blacklist.txt"
+export BLACKLIST_FILE="/workspace/stonevol/subjects_to_rerun_iclight.txt"
 
 FORCE_FLAG=""
 for arg in "$@"; do
