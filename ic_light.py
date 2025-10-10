@@ -456,13 +456,13 @@ if __name__ == "__main__":
     parser.add_argument("--prompt_file", type=str, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
     parser.add_argument("--padding", type=int, default=0, help="Padding for the crop")
     parser.add_argument("--force", action="store_true", help="Overwrite existing images.")
-    parser.add_argument("--blacklist_file", type=str, default="/workspace/stonevol/subjects_to_rerun_iclight.txt", help="Path to the blacklist file (includes subjects to re-run).")
+    parser.add_argument("--blacklist_file", type=str, default=None, help="Path to the blacklist file (includes subjects to re-run).") # ! deprecated
     args = parser.parse_args()
 
     pod_index = get_pod_index()
     total_pods = int(os.environ.get('JOB_PARALLELISM', 1))
     pod_id = os.environ.get('HOSTNAME', f'pod_{random.randint(1000, 9999)}')
-    blacklist = set(get_blacklist(args.blacklist_file))
+    blacklist = set(get_blacklist(args.blacklist_file)) if args.blacklist_file is not None else set()
     if len(blacklist) > 0:
         print(f"Loaded blacklist file with {len(blacklist)} subjects.")
     assigned_subjects = get_assigned_subjects(args.input_dir, pod_index, total_pods)
@@ -481,10 +481,10 @@ if __name__ == "__main__":
 
     # for each subject
     for subject in tqdm(assigned_subjects, desc="Processing Subjects"):
-        if os.path.exists(os.path.join(args.out_path, subject)) and subject not in blacklist:
-            # in this case, we have already processed the subject.
-            # somewhat fragile checking though, as it relies on an updated "blacklist" file
-            # that confirms that non-blacklisted subjects have fully processed directories.
+        if os.path.exists(os.path.join(args.out_path, subject)):
+            # in this case, we have already processed the subject. (Assumed!)
+            # NOTE: it assumes previous directories were fully processed, when this may not be the case.
+            # We rely on re-validation after script completion.
             continue
 
         # for each camera
