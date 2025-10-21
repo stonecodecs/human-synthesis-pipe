@@ -411,7 +411,7 @@ def get_pod_index():
     # Try different ways to get pod index
     return int(os.environ.get('JOB_COMPLETION_INDEX', 0))
 
-def get_assigned_subjects(root_dir, pod_index, total_pods, blacklist=None):
+def get_assigned_subjects(root_dir, pod_index, total_pods, blacklist=None, only_include=None):
     """Get the list of subjects assigned to this pod based on index."""
     if blacklist is None:
         blacklist = set()
@@ -423,6 +423,9 @@ def get_assigned_subjects(root_dir, pod_index, total_pods, blacklist=None):
             if item in blacklist:
                 continue
             all_subjects.append(item)
+
+    if only_include is not None:
+        all_subjects = [subject for subject in all_subjects if subject in only_include]
 
     # Sort for consistent partitioning
     all_subjects = sorted(all_subjects)
@@ -476,9 +479,6 @@ if __name__ == "__main__":
         blacklist = set([os.path.join(args.out_path, subject) for subject in os.listdir(args.out_path) if os.path.isdir(os.path.join(args.out_path, subject))])
         print(f"Loaded blacklist file with {len(blacklist)} subjects.")
 
-    assigned_subjects = get_assigned_subjects(args.input_dir, pod_index, total_pods, blacklist=blacklist)
-    print(f"Pod {pod_id} assigned subjects {assigned_subjects[:5]}...")
-
     # Parse the only_include argument to filter assigned_subjects if specified
     only_include_indices = None
     if args.only_include is not None:
@@ -496,10 +496,8 @@ if __name__ == "__main__":
             print(f"Error parsing only_include: {e}")
             only_include_indices = None
 
-    if only_include_indices is not None:
-        # Intersect assigned_subjects with only_include_indices (keep those in the specified range)
-        assigned_subjects = [s for s in assigned_subjects if str(s) in only_include_indices]
-        print(f"Filtered to {len(assigned_subjects)} subjects using only_include: {args.only_include}")
+    assigned_subjects = get_assigned_subjects(args.input_dir, pod_index, total_pods, blacklist=blacklist, only_include=only_include_indices)
+    print(f"Pod {pod_id} assigned subjects {assigned_subjects[:5]}...")
 
     # Create output directory with structure the same as the MVHN dataset dir
     if not os.path.exists(args.out_path):
