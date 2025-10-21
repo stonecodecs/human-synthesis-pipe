@@ -460,6 +460,7 @@ if __name__ == "__main__":
     parser.add_argument("--caption_json", type=str, default="/workspace/datasetvol/mvhuman_data/text_description_48.json", help="Path to the caption json file")
     parser.add_argument("--prompt_file", type=str, default="/workspace/datasetvol/light_prompts.txt", help="Path to the prompt file")
     parser.add_argument("--padding", type=int, default=0, help="Padding for the crop")
+    parser.add_argument("--only_include", type=str, default=None, help="Only include subjects in a provided range. Ex. 103000-104000")
     parser.add_argument("--force", action="store_true", help="Overwrite existing images.")
     parser.add_argument("--blacklist_file", type=str, default=None, help="Path to the blacklist file (includes subjects to re-run).") # ! deprecated
     args = parser.parse_args()
@@ -477,6 +478,28 @@ if __name__ == "__main__":
 
     assigned_subjects = get_assigned_subjects(args.input_dir, pod_index, total_pods, blacklist=blacklist)
     print(f"Pod {pod_id} assigned subjects {assigned_subjects[:5]}...")
+
+    # Parse the only_include argument to filter assigned_subjects if specified
+    only_include_indices = None
+    if args.only_include is not None:
+        try:
+            # Expect format like "103000-140000"
+            parts = args.only_include.split('-')
+            if len(parts) == 2:
+                start_id = int(parts[0])
+                end_id = int(parts[1])
+                only_include_indices = set(str(i) for i in range(start_id, end_id + 1))
+            else:
+                # Allow for comma-separated values as well
+                only_include_indices = set(part.strip() for part in args.only_include.split(','))
+        except Exception as e:
+            print(f"Error parsing only_include: {e}")
+            only_include_indices = None
+
+    if only_include_indices is not None:
+        # Intersect assigned_subjects with only_include_indices (keep those in the specified range)
+        assigned_subjects = [s for s in assigned_subjects if str(s) in only_include_indices]
+        print(f"Filtered to {len(assigned_subjects)} subjects using only_include: {args.only_include}")
 
     # Create output directory with structure the same as the MVHN dataset dir
     if not os.path.exists(args.out_path):
