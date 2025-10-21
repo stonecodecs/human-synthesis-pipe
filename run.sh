@@ -1,7 +1,7 @@
 #/bin/bash
 export INPUT_PATH="/workspace/datasetvol/mvhuman_data/mv_captures"
-# export OUTPUT_PATH="/workspace/datasetvol/mvhuman_data/relit_images"
-export OUTPUT_PATH="/workspace/temp"
+export OUTPUT_PATH="/workspace/datasetvol/mvhuman_data/relit_images"
+# export OUTPUT_PATH="/workspace/temp"
 export LIGHT_NUM_SAMPLES=1
 export LIGHT_SEED=67890
 export LIGHT_STEPS=25
