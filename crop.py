@@ -92,7 +92,7 @@ def get_bbox_from_annot(annot):
 #     cropped = img_masked_pil.crop([center_x - half_size, center_y - half_size, center_x + half_size, center_y + half_size])
 #     return cropped
 
-def crop_image(image_path, mask_path, background_color=(0, 0, 0), expected_shape=(1500, 2048), padding=0):
+def crop_image(image_path, mask_path, background_color=(0, 0, 0), expected_shape=(1500, 2048), padding=0, scale=0.5):
     """Crop image based on crop parameters."""
     img = np.array(Image.open(image_path))
     if expected_shape is not None: # otherwise, ignore shape check
@@ -101,10 +101,11 @@ def crop_image(image_path, mask_path, background_color=(0, 0, 0), expected_shape
     img_masked = apply_mask(img, mask, background_color)
     img_masked_pil = Image.fromarray(img_masked)
 
+    # NOTE: annots from ~103000+ are pre-downsampled by 0.5 rather than native resolution
     annots_path = image_path.replace('images_lr', 'annots').replace('_img.jpg', '_img.json')
     annot = load_json(annots_path)
 
-    crop_params = np.array(get_bbox_from_annot(annot)) * 0.5 # MVHN 2x downsample
+    crop_params = np.array(get_bbox_from_annot(annot)) * scale # MVHN 2x downsample
     (center_x, center_y), (width, height) = get_bbox_center_and_size(crop_params)
     max_dim = max(int(width), int(height))
     center_x = int(center_x)

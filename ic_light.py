@@ -512,10 +512,17 @@ if __name__ == "__main__":
 
                 # crop image (based on annots center)
                 try:
+                    # NOTE: annots from ~103000+ are pre-downsampled by 0.5 rather than native resolution
+                    numerical_subject_id = int(subject)
+                    if numerical_subject_id >= 103000:
+                        annots_scale = 1.0
+                    else:
+                        annots_scale = 0.5
                     cropped_image = crop_image(
                         image_path,
                         mask_path,
-                        padding=abs(args.padding)
+                        padding=abs(args.padding),
+                        scale=annots_scale
                     )
                
 
