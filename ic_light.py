@@ -476,8 +476,9 @@ if __name__ == "__main__":
         print(f"Loaded blacklist file with {len(blacklist)} subjects.")
     else: # if none or empty, use default: blacklist all existing subjects in out_path, such that subjects
     # are equally distributed amongst GPUs for the current run.
-        blacklist = set([os.path.join(args.out_path, subject) for subject in os.listdir(args.out_path) if os.path.isdir(os.path.join(args.out_path, subject))])
-        print(f"Loaded blacklist file with {len(blacklist)} subjects.")
+        # blacklist = set([os.path.join(args.out_path, subject) for subject in os.listdir(args.out_path) if os.path.isdir(os.path.join(args.out_path, subject))])
+        blacklist = set()
+        print(f"No blacklist file provided, using empty blacklist.")
 
     # Parse the only_include argument to filter assigned_subjects if specified
     only_include_indices = None
@@ -512,7 +513,7 @@ if __name__ == "__main__":
 
     # for each subject
     for subject in tqdm(assigned_subjects, desc="Processing Subjects"):
-        if os.path.exists(os.path.join(args.out_path, subject)):
+        if (not args.force and os.path.exists(os.path.join(args.out_path, subject))) or subject in blacklist:
             # in this case, we have already processed the subject. (Assumed!)
             # NOTE: it assumes previous directories were fully processed, when this may not be the case.
             # We rely on re-validation after script completion.
@@ -546,7 +547,6 @@ if __name__ == "__main__":
                         scale=annots_scale
                     )
                
-
                     np_cropped = np.array(cropped_image)
                     np_cropped = cv2.resize(np_cropped, (576, 576), interpolation=cv2.INTER_LANCZOS4)
 
